@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { parseFile, runParser } from './js/parse.js';
 import { analyze } from './js/semantic.js';
 import { run } from './js/interpreter.js';
+import { toPython } from './js/translator.js';
 
 const [command, file] = process.argv.slice(2);
 
@@ -14,6 +15,7 @@ const commands = {
     process.exitCode = exitCode & 255;
     return output;
   },
+  py: () => toPython(analyze(parseFile(file))),
 };
 
 // Errors that describe a problem in the user's C program (not a bug in this tool).

@@ -2,6 +2,7 @@
 import { toHierarchy } from './tree.js';
 import { analyze } from '/js/semantic.js';
 import { run } from '/js/interpreter.js';
+import { toPython } from '/js/translator.js';
 
 const $ = id => document.getElementById(id);
 const code = $('code'), output = $('output'), python = $('python');
@@ -68,8 +69,11 @@ function renderTree(ast) {
   }
 
   update();
-  const height = svg.node().clientHeight;
-  svg.call(zoom.transform, d3.zoomIdentity.translate(40, height / 2));
+  // Fit the whole tree into the panel (never enlarge past 100%).
+  const { clientWidth: width, clientHeight: height } = svg.node();
+  const box = g.node().getBBox();
+  const scale = Math.max(0.2, Math.min(1, (width - 40) / box.width, (height - 20) / box.height));
+  svg.call(zoom.transform, d3.zoomIdentity.translate(20 - box.x * scale, (height - box.height * scale) / 2 - box.y * scale).scale(scale));
 }
 
 // ---------- buttons ----------
@@ -92,7 +96,18 @@ $('run').onclick = async () => {
     show(output, e.message, true);
   }
 };
-$('translate').onclick = () => show(python, 'not implemented yet');
+$('translate').onclick = async () => {
+  const ast = await parse();
+  if (!ast) return;
+  renderTree(ast);
+  try {
+    show(python, toPython(analyze(ast)));
+    show(output, 'Translated OK.');
+  } catch (e) {
+    show(python, '');
+    show(output, e.message, true);
+  }
+};
 
 // ---------- examples ----------
 
