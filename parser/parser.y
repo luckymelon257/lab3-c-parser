@@ -39,17 +39,20 @@ void yyerror(const char *msg);
 
 /* Operator precedence, lowest first. Lines lower in the list bind tighter.
  * These declarations resolve the shift/reduce conflicts of the ambiguous expr grammar
- * and the dangling else (IF ... stmt . ELSE: ELSE is higher than LOWER_THAN_ELSE, so shift). */
-%nonassoc LOWER_THAN_ELSE
-%nonassoc ELSE
-%right '=' ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN
+ * and the dangling else (IF ... stmt . ELSE: ELSE is higher than LOWER_THAN_ELSE, so shift).
+ * %left = left-associative (a-b-c = (a-b)-c). %precedence = level only: associativity is
+ * never needed there (bison -Wprecedence checks this). Assignment is right-associative by
+ * the grammar itself: `lvalue '=' expr` only allows a variable on the left. */
+%precedence LOWER_THAN_ELSE
+%precedence ELSE
+%precedence '=' ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN
 %left OR
 %left AND
 %left EQ NE
 %left '<' '>' LE GE
 %left '+' '-'
 %left '*' '/' '%'
-%right UMINUS '!' INC DEC
+%precedence UMINUS '!'
 
 %%
 

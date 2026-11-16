@@ -7,7 +7,7 @@ CFLAGS = -Wall -Wextra -std=c11 -Ibuild -Iparser
 
 SRC = build/parser.c build/lexer.c parser/ast.c parser/main.c
 
-.PHONY: all test clean check-bison
+.PHONY: all test clean check-bison report conflicts
 
 all: build/cparser
 
@@ -16,13 +16,24 @@ check-bison:
 
 build/parser.c build/parser.h: parser/parser.y | check-bison
 	@mkdir -p build
-	$(BISON) -d -Werror=conflicts-sr -Werror=conflicts-rr -o build/parser.c parser/parser.y
+	$(BISON) -d -Wprecedence -Werror=conflicts-sr -Werror=conflicts-rr -o build/parser.c parser/parser.y
 
 build/lexer.c: parser/lexer.l build/parser.h
 	$(FLEX) -o build/lexer.c parser/lexer.l
 
 build/cparser: $(SRC) $(wildcard parser/*.h)
 	$(CC) $(CFLAGS) -o $@ $(SRC)
+
+# LALR(1) automaton of the real grammar: states, items, lookaheads, resolved conflicts.
+report: | check-bison
+	@mkdir -p build
+	$(BISON) -v --report=all -o build/report.c parser/parser.y
+	@echo "written build/report.output"
+
+# Demo grammar with deliberate conflicts; bison explains each with a counterexample.
+conflicts: | check-bison
+	@mkdir -p build
+	-$(BISON) -Wcounterexamples -o build/conflicts.c theory/conflicts.y
 
 test: all
 	node --test tests/
