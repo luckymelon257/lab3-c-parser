@@ -1,5 +1,7 @@
 // Web page logic: parse via the server, draw the AST with d3, run and translate in the browser.
 import { toHierarchy } from './tree.js';
+import { analyze } from '/js/semantic.js';
+import { run } from '/js/interpreter.js';
 
 const $ = id => document.getElementById(id);
 const code = $('code'), output = $('output'), python = $('python');
@@ -79,7 +81,17 @@ $('parse').onclick = async () => {
   show(output, 'Parsed OK.');
 };
 
-$('run').onclick = () => show(output, 'not implemented yet');
+$('run').onclick = async () => {
+  const ast = await parse();
+  if (!ast) return;
+  renderTree(ast);
+  try {
+    const result = run(analyze(ast));
+    show(output, `${result.output}\n[exit code ${result.exitCode}]`);
+  } catch (e) {
+    show(output, e.message, true);
+  }
+};
 $('translate').onclick = () => show(python, 'not implemented yet');
 
 // ---------- examples ----------
