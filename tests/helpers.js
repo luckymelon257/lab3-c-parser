@@ -8,3 +8,10 @@ export const CPARSER = ROOT + 'build/cparser';
 export function runCparser(args, input = '') {
   return spawnSync(CPARSER, args, { input, encoding: 'utf8' });
 }
+
+// Parse C source with the binary and return the AST object.
+export function parse(src) {
+  const r = runCparser([], src);
+  if (r.status !== 0) throw new Error(r.stderr);
+  return JSON.parse(r.stdout);
+}

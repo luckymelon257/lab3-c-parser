@@ -5,7 +5,7 @@ FLEX  ?= flex
 CC    ?= cc
 CFLAGS = -Wall -Wextra -std=c11 -Ibuild -Iparser
 
-SRC = build/parser.c build/lexer.c parser/main.c
+SRC = build/parser.c build/lexer.c parser/ast.c parser/main.c
 
 .PHONY: all test clean check-bison
 

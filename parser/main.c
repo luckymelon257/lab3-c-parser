@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "parser.h"
+#include "ast.h"
 
 extern FILE *yyin;
 extern char *yytext;
@@ -26,5 +27,8 @@ int main(int argc, char **argv) {
             printf("%d\t%s\t%s\n", yylloc.first_line, token_name(tok), yytext);
         return 0;
     }
-    return yyparse() == 0 ? 0 : 1;
+    if (yyparse() != 0) return 1;
+    ast_print_json(ast_root, stdout);
+    ast_free(ast_root);
+    return 0;
 }
