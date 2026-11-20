@@ -1,11 +1,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseSource } from '../js/parse.js';
-import { analyze, SemanticError } from '../js/semantic.js';
+import { parseSource } from '../src/parse.js';
+import { analyze, SemanticError } from '../src/semantic.js';
+import type { FuncDef, Program, Return } from '../src/types.js';
 
-const A = src => analyze(parseSource(src));
+// Typed as `any`: tests walk deep into the annotated tree to check its exact shape.
+const A = (src: string): any => analyze(parseSource(src));
 // Value of the `return` statement in main.
-const retExpr = p => p.decls.find(d => d.name === 'main').body.body.find(s => s.type === 'Return').value;
+// Returns `any` for the same reason as A.
+const retExpr = (p: Program): any => {
+  const main = p.decls.find((d): d is FuncDef => d.type === 'FuncDef' && d.name === 'main');
+  const ret = main?.body.body.find((s): s is Return => s.type === 'Return');
+  return ret?.value;
+};
 
 test('int/double types', () => {
   const e = retExpr(A('int main(){ int a = 1; double d = 2; return a / 2 + d; }'));
@@ -27,11 +34,18 @@ test('identifiers carry varType and isArray', () => {
 });
 
 test('call to function declared later', () => {
-  assert.equal(retExpr(A('int main(){ return half(3.0) > 1; } double half(double x){ return x / 2; }')).left.ctype, 'double');
+  assert.equal(
+    retExpr(A('int main(){ return half(3.0) > 1; } double half(double x){ return x / 2; }')).left
+      .ctype,
+    'double',
+  );
 });
 
 test('undeclared variable', () => {
-  assert.throws(() => A('int main(){ return y; }'), e => e instanceof SemanticError && e.message === "line 1: undeclared variable 'y'");
+  assert.throws(
+    () => A('int main(){ return y; }'),
+    e => e instanceof SemanticError && e.message === "line 1: undeclared variable 'y'",
+  );
 });
 
 test('undeclared function', () => {
@@ -49,7 +63,10 @@ test('shadowing in inner block allowed and marked', () => {
 });
 
 test('local hiding a global is marked', () => {
-  assert.equal(A('int x; int main(){ int x; return 0; }').decls[1].body.body[0].decls[0].shadows, true);
+  assert.equal(
+    A('int x; int main(){ int x; return 0; }').decls[1].body.body[0].decls[0].shadows,
+    true,
+  );
 });
 
 test('sibling loops do not shadow', () => {
@@ -58,14 +75,22 @@ test('sibling loops do not shadow', () => {
 });
 
 test('arity', () => {
-  assert.throws(() => A('int f(int a){return a;} int main(){ return f(); }'), /function 'f' expects 1 arguments, got 0/);
+  assert.throws(
+    () => A('int f(int a){return a;} int main(){ return f(); }'),
+    /function 'f' expects 1 arguments, got 0/,
+  );
 });
 
 test('array rules', () => {
   assert.throws(() => A('int main(){ int a[3]; return a; }'), /'a' is an array/);
   assert.throws(() => A('int main(){ int x; return x[0]; }'), /'x' is not an array/);
-  assert.throws(() => A('int f(int v){ return v; } int main(){ int a[3]; return f(a); }'), /'a' is an array/);
-  assert.doesNotThrow(() => A('int f(int v[]){ return v[0]; } int main(){ int a[3]; return f(a); }'));
+  assert.throws(
+    () => A('int f(int v){ return v; } int main(){ int a[3]; return f(a); }'),
+    /'a' is an array/,
+  );
+  assert.doesNotThrow(() =>
+    A('int f(int v[]){ return v[0]; } int main(){ int a[3]; return f(a); }'),
+  );
 });
 
 test('missing main', () => {

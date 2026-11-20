@@ -1,57 +1,59 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>C Subset Translator</title>
-  <link rel="stylesheet" href="/web/style.css">
-</head>
-<body>
-  <header>
-    <h1>C Subset Translator</h1>
-    <span class="subtitle">flex + bison front end · JS interpreter · C → Python · d3 AST</span>
-  </header>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>C Subset Translator</title>
+    <link rel="stylesheet" href="/web/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>C Subset Translator</h1>
+      <span class="subtitle">flex + bison front end · TypeScript interpreter · C → Python · d3 AST</span>
+    </header>
 
-  <main>
-    <section class="editor">
-      <div class="toolbar">
-        <select id="examples" aria-label="Example program"><option value="">— example —</option></select>
-        <button id="parse">Parse</button>
-        <button id="run">Run</button>
-        <button id="translate">Translate</button>
-      </div>
-      <textarea id="code" spellcheck="false" aria-label="C source code">int main() {
+    <main>
+      <section class="editor">
+        <div class="toolbar">
+          <select id="examples" aria-label="Example program">
+            <option value="">— example —</option>
+          </select>
+          <button id="parse">Parse</button>
+          <button id="run">Run</button>
+          <button id="translate">Translate</button>
+        </div>
+        <textarea id="code" spellcheck="false" aria-label="C source code">
+int main() {
     printf("Hello, %d!\n", 6 * 7);
     return 0;
-}</textarea>
-    </section>
+}</textarea
+        >
+      </section>
 
-    <section class="tree-panel">
-      <div class="panel-title">
-        AST
-        <span class="legend">
-          <span class="dot decl"></span>declaration
-          <span class="dot stmt"></span>statement
-          <span class="dot expr"></span>expression
-          <span class="dot literal"></span>literal
-        </span>
-        <span class="hint">click a node to collapse · drag / scroll to pan and zoom</span>
-      </div>
-      <svg id="tree"></svg>
-    </section>
+      <section class="tree-panel">
+        <div class="panel-title">
+          AST
+          <span class="legend">
+            <span class="dot decl"></span>declaration <span class="dot stmt"></span>statement
+            <span class="dot expr"></span>expression <span class="dot literal"></span>literal
+          </span>
+          <span class="hint">click a node to collapse · drag / scroll to pan and zoom</span>
+        </div>
+        <svg id="tree"></svg>
+      </section>
 
-    <section class="out">
-      <div class="panel-title">Output</div>
-      <pre id="output"></pre>
-    </section>
+      <section class="out">
+        <div class="panel-title">Output</div>
+        <pre id="output"></pre>
+      </section>
 
-    <section class="out">
-      <div class="panel-title">Python</div>
-      <pre id="python"></pre>
-    </section>
-  </main>
+      <section class="out">
+        <div class="panel-title">Python</div>
+        <pre id="python"></pre>
+      </section>
+    </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.2/dist/d3.min.js"></script>
-  <script type="module" src="/web/app.js"></script>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.2/dist/d3.min.js"></script>
+    <script type="module" src="/js/app.js"></script>
+  </body>
 </html>

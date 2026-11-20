@@ -2,16 +2,20 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { ROOT } from './helpers.js';
-import { parseSource } from '../js/parse.js';
-import { analyze } from '../js/semantic.js';
-import { run, formatPrintf, RuntimeError } from '../js/interpreter.js';
+import { parseSource } from '../src/parse.js';
+import { analyze } from '../src/semantic.js';
+import { run, formatPrintf, RuntimeError } from '../src/interpreter.js';
 
-const R = src => run(analyze(parseSource(src))).output;
+const R = (src: string): string => run(analyze(parseSource(src))).output;
 // Checks the error message itself (assert.throws with a regex sees "Name: message").
-const throwsMsg = (fn, re) => assert.throws(fn, e => e instanceof RuntimeError && re.test(e.message));
+const throwsMsg = (fn: () => unknown, re: RegExp) =>
+  assert.throws(fn, e => e instanceof RuntimeError && re.test(e.message));
 
 test('formatPrintf exact', () => {
-  assert.equal(formatPrintf('%d|%i|%.2f|%f|%c|%s|%%', [7, -3, 2.5, 1, 97, 'x']), '7|-3|2.50|1.000000|a|x|%');
+  assert.equal(
+    formatPrintf('%d|%i|%.2f|%f|%c|%s|%%', [7, -3, 2.5, 1, 97, 'x']),
+    '7|-3|2.50|1.000000|a|x|%',
+  );
 });
 
 test('formatPrintf %d truncates a double', () => {
@@ -39,7 +43,10 @@ test('assign double to int truncates', () => {
 });
 
 test('int overflow wraps to 32 bits', () => {
-  assert.equal(R('int main(){ int x = 2147483647; x = x + 1; printf("%d %d", x, 65536 * 65536); return 0; }'), '-2147483648 0');
+  assert.equal(
+    R('int main(){ int x = 2147483647; x = x + 1; printf("%d %d", x, 65536 * 65536); return 0; }'),
+    '-2147483648 0',
+  );
 });
 
 test('char arithmetic', () => {
@@ -47,35 +54,69 @@ test('char arithmetic', () => {
 });
 
 test('logic: short circuit and 0/1 values', () => {
-  assert.equal(R('int f(){ printf("called"); return 1; } int main(){ int a = 0 && f(); int b = 5 || f(); printf("%d %d %d", a, b, !7); return 0; }'), '0 1 0');
+  assert.equal(
+    R(
+      'int f(){ printf("called"); return 1; } int main(){ int a = 0 && f(); int b = 5 || f(); printf("%d %d %d", a, b, !7); return 0; }',
+    ),
+    '0 1 0',
+  );
 });
 
 test('pre and post increment values', () => {
-  assert.equal(R('int main(){ int i = 5; int a = i++; int b = ++i; printf("%d %d %d", a, b, i); return 0; }'), '5 7 7');
+  assert.equal(
+    R('int main(){ int i = 5; int a = i++; int b = ++i; printf("%d %d %d", a, b, i); return 0; }'),
+    '5 7 7',
+  );
 });
 
 test('compound assignment', () => {
-  assert.equal(R('int main(){ int x = 10; x -= 3; x *= 2; x /= 4; x %= 2; printf("%d", x); return 0; }'), '1');
+  assert.equal(
+    R('int main(){ int x = 10; x -= 3; x *= 2; x /= 4; x %= 2; printf("%d", x); return 0; }'),
+    '1',
+  );
 });
 
 test('recursion', () => {
-  assert.equal(R('int f(int n){ if (n < 2) return 1; return n * f(n - 1); } int main(){ printf("%d", f(5)); return 0; }'), '120');
+  assert.equal(
+    R(
+      'int f(int n){ if (n < 2) return 1; return n * f(n - 1); } int main(){ printf("%d", f(5)); return 0; }',
+    ),
+    '120',
+  );
 });
 
 test('break and continue', () => {
-  assert.equal(R('int main(){ for (int i = 0; i < 10; i++) { if (i == 2) continue; if (i == 5) break; printf("%d", i); } return 0; }'), '0134');
+  assert.equal(
+    R(
+      'int main(){ for (int i = 0; i < 10; i++) { if (i == 2) continue; if (i == 5) break; printf("%d", i); } return 0; }',
+    ),
+    '0134',
+  );
 });
 
 test('while and do-while', () => {
-  assert.equal(R('int main(){ int i = 0; while (i < 3) i++; do { printf("%d", i); i--; } while (i > 0); return 0; }'), '321');
+  assert.equal(
+    R(
+      'int main(){ int i = 0; while (i < 3) i++; do { printf("%d", i); i--; } while (i > 0); return 0; }',
+    ),
+    '321',
+  );
 });
 
 test('arrays by reference', () => {
-  assert.equal(R('void z(int a[]){ a[0] = 9; } int main(){ int a[2]; z(a); printf("%d", a[0]); return 0; }'), '9');
+  assert.equal(
+    R('void z(int a[]){ a[0] = 9; } int main(){ int a[2]; z(a); printf("%d", a[0]); return 0; }'),
+    '9',
+  );
 });
 
 test('globals', () => {
-  assert.equal(R('int count; void inc(){ count++; } int main(){ inc(); inc(); printf("%d", count); return 0; }'), '2');
+  assert.equal(
+    R(
+      'int count; void inc(){ count++; } int main(){ inc(); inc(); printf("%d", count); return 0; }',
+    ),
+    '2',
+  );
 });
 
 test('block scope shadowing', () => {
@@ -83,7 +124,10 @@ test('block scope shadowing', () => {
 });
 
 test('uninitialized variables are 0', () => {
-  assert.equal(R('int main(){ int x; double d; int a[2]; printf("%d %.1f %d", x, d, a[1]); return 0; }'), '0 0.0 0');
+  assert.equal(
+    R('int main(){ int x; double d; int a[2]; printf("%d %.1f %d", x, d, a[1]); return 0; }'),
+    '0 0.0 0',
+  );
 });
 
 test('stops infinite loop', () => {
@@ -96,11 +140,17 @@ test('division by zero', () => {
 });
 
 test('out of bounds', () => {
-  throwsMsg(() => R('int main(){ int a[3]; a[3] = 1; return 0; }'), /index 3 out of bounds for 'a' \(size 3\)/);
+  throwsMsg(
+    () => R('int main(){ int a[3]; a[3] = 1; return 0; }'),
+    /index 3 out of bounds for 'a' \(size 3\)/,
+  );
 });
 
 test('deep recursion stops', () => {
-  throwsMsg(() => R('int f(int n){ return f(n + 1); } int main(){ return f(0); }'), /recursion depth limit exceeded/);
+  throwsMsg(
+    () => R('int f(int n){ return f(n + 1); } int main(){ return f(0); }'),
+    /recursion depth limit exceeded/,
+  );
 });
 
 test('exit code', () => {
@@ -108,13 +158,16 @@ test('exit code', () => {
 });
 
 test('cli run prints output and exits with main result', () => {
-  const r = spawnSync('node', [ROOT + 'cli.js', 'run', ROOT + 'examples/factorial.c'], { encoding: 'utf8' });
+  const r = spawnSync('node', [ROOT + 'dist/cli.js', 'run', ROOT + 'examples/factorial.c'], {
+    encoding: 'utf8',
+  });
   assert.equal(r.status, 0);
   assert.match(r.stdout, /^10! = 3628800$/m);
 });
 
 test('JS stack overflow becomes a RuntimeError', () => {
-  const src = 'int f(int n) { if (n > 0) { { while (1) { if (n > 0) { return 1 + f(n - 1); } } } } return 0; }\n'
-    + 'int main() { return f(999); }';
+  const src =
+    'int f(int n) { if (n > 0) { { while (1) { if (n > 0) { return 1 + f(n - 1); } } } } return 0; }\n' +
+    'int main() { return f(999); }';
   throwsMsg(() => R(src), /^line 1: recursion depth limit exceeded$/);
 });

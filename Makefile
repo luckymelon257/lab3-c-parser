@@ -1,4 +1,4 @@
-# Build the C front end (flex + bison) and run the tests.
+# Build the C front end (flex + bison), compile the TypeScript and run the tests.
 # Bison 3.x is required: Homebrew's bison when installed, else the one on PATH.
 BISON ?= $(shell p=$$(brew --prefix bison 2>/dev/null) && [ -x $$p/bin/bison ] && echo $$p/bin/bison || echo bison)
 FLEX  ?= flex
@@ -7,9 +7,9 @@ CFLAGS = -Wall -Wextra -std=c11 -Ibuild -Iparser
 
 SRC = build/parser.c build/lexer.c parser/ast.c parser/main.c
 
-.PHONY: all test clean check-bison report conflicts
+.PHONY: all ts test format clean check-bison report conflicts
 
-all: build/cparser
+all: build/cparser ts
 
 check-bison:
 	@$(BISON) --version | grep -q 'GNU Bison) 3' || (echo "error: bison 3.x required (brew install bison)"; exit 1)
@@ -35,8 +35,19 @@ conflicts: | check-bison
 	@mkdir -p build
 	-$(BISON) -Wcounterexamples -o build/conflicts.c theory/conflicts.y
 
+# TypeScript -> dist/ (installs the dev tools on first run).
+node_modules: package.json package-lock.json
+	npm ci --no-audit --no-fund
+	@touch node_modules
+
+ts: node_modules
+	npx tsc
+
 test: all
-	node --test tests/
+	node --test dist/tests/
+
+format: node_modules
+	npx prettier --write .
 
 clean:
-	rm -rf build
+	rm -rf build dist

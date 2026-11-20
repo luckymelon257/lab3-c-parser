@@ -1,1 +1,17 @@
-{ "type": "module" }
+{
+  "name": "c-subset-translator",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "node --test dist/tests/",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/d3": "^7.4.3",
+    "@types/node": "^20.19.43",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,16 +1,22 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import type { Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
+
 import { createServer } from '../server.js';
 
-let server, base;
+let server: Server;
+let base: string;
+
 before(async () => {
   server = createServer();
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  base = `http://127.0.0.1:${server.address().port}`;
+  await new Promise<void>(r => server.listen(0, '127.0.0.1', r));
+  base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
 after(() => server.close());
 
-const post = async (path, body) => (await fetch(base + path, { method: 'POST', body })).json();
+const post = async (path: string, body: string) =>
+  (await fetch(base + path, { method: 'POST', body })).json();
 
 test('POST /api/parse ok', async () => {
   const j = await post('/api/parse', 'int main(){return 0;}');
@@ -31,8 +37,8 @@ test('GET /api/examples lists files', async () => {
 test('GET / serves the page, static files have types', async () => {
   const page = await fetch(base + '/');
   assert.equal(page.status, 200);
-  assert.match(page.headers.get('content-type'), /text\/html/);
-  assert.match((await fetch(base + '/web/tree.js')).headers.get('content-type'), /javascript/);
+  assert.match(page.headers.get('content-type') ?? '', /text\/html/);
+  assert.match((await fetch(base + '/js/tree.js')).headers.get('content-type') ?? '', /javascript/);
   assert.equal((await fetch(base + '/examples/factorial.c')).status, 200);
 });
 

@@ -10,26 +10,29 @@ A syntax analyzer for a subset of C built with **flex + bison** (Lex/YACC), plus
 
 - macOS with Xcode command line tools (`cc`, `clang`, `flex`)
 - GNU Bison 3.x: `brew install bison` (Apple's bison 2.3 is too old; the Makefile finds Homebrew's)
-- Node.js 20+ (no npm packages needed)
+- Node.js 20+ and npm (dev tools only: TypeScript, Prettier, type definitions)
 - Python 3 (only to run translated programs and the equivalence tests)
 
 ## Usage
 
 ```bash
-make                                     # builds build/cparser
+make                                     # builds build/cparser and compiles TypeScript to dist/
 make test                                # builds and runs all tests
+make format                              # formats the code with Prettier
 ```
+
+The first `make` runs `npm ci` to install the dev tools.
 
 ```bash
 build/cparser --tokens examples/factorial.c   # token stream (lexer only)
-node cli.js ast examples/factorial.c          # AST as JSON
-node cli.js run examples/factorial.c          # run with the interpreter
-node cli.js py  examples/factorial.c          # translate to Python
-node cli.js py  examples/factorial.c | python3
+node dist/cli.js ast examples/factorial.c     # AST as JSON
+node dist/cli.js run examples/factorial.c     # run with the interpreter
+node dist/cli.js py  examples/factorial.c     # translate to Python
+node dist/cli.js py  examples/factorial.c | python3
 ```
 
 ```bash
-node server.js                           # web page at http://127.0.0.1:3000
+npm start                                # web page at http://127.0.0.1:3000
 ```
 
 Pick an example, then **Parse** (AST tree), **Run** (output) or **Translate** (Python).
@@ -49,13 +52,16 @@ parser/lexer.l      flex rules (tokens, comments, positions)
 parser/parser.y     bison grammar, precedence, AST-building actions
 parser/ast.h/.c     AST node, JSON printer
 parser/main.c       cparser command line
-js/parse.js         runs build/cparser from Node
-js/semantic.js      scopes, types, checks; annotates the AST
-js/interpreter.js   executes the AST
-js/translator.js    AST -> Python source
-web/                page, d3 tree (tree.js is pure and tested)
-server.js           local server: static files + POST /api/parse
-cli.js              command line front
+src/types.ts        AST node types and data structures of every pass
+src/constants.ts    shared constants (limits, operator tables, server settings)
+src/parse.ts        runs build/cparser from Node
+src/semantic.ts     scopes, types, checks; annotates the AST
+src/interpreter.ts  executes the AST
+src/translator.ts   AST -> Python source
+web/                page, d3 tree (tree.ts is pure and tested)
+server.ts           local server: static files + POST /api/parse
+cli.ts              command line front
+dist/               compiled JavaScript (make)
 examples/           demo programs (valid C, also compiled by clang in tests)
 tests/              node:test suites
 theory/conflicts.y  conflict demo grammar

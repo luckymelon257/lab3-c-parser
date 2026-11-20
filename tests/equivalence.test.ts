@@ -5,12 +5,14 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readdirSync, writeFileSync, mkdirSync } from 'node:fs';
 import { ROOT } from './helpers.js';
-import { parseFile } from '../js/parse.js';
-import { analyze } from '../js/semantic.js';
-import { run } from '../js/interpreter.js';
-import { toPython } from '../js/translator.js';
+import { parseFile } from '../src/parse.js';
+import { analyze } from '../src/semantic.js';
+import { run } from '../src/interpreter.js';
+import { toPython } from '../src/translator.js';
 
-const examples = readdirSync(ROOT + 'examples').filter(f => f.endsWith('.c')).sort();
+const examples = readdirSync(ROOT + 'examples')
+  .filter(f => f.endsWith('.c'))
+  .sort();
 mkdirSync(ROOT + 'build', { recursive: true });
 
 test('there are at least 8 examples', () => assert.ok(examples.length >= 8, examples.join(', ')));

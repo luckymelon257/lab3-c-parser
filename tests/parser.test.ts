@@ -4,10 +4,13 @@ import { readdirSync } from 'node:fs';
 import { ROOT, runCparser, parse } from './helpers.js';
 
 // Statement number i of the first function body.
-const firstStmt = (src, i = 0) => parse(src).decls[0].body.body[i];
+const firstStmt = (src: string, i = 0) => parse(src).decls[0].body.body[i];
 // Value of the first `return` in the first function.
-const exprOf = src => firstStmt(src).value;
-const exampleFiles = () => readdirSync(ROOT + 'examples').filter(f => f.endsWith('.c')).map(f => ROOT + 'examples/' + f);
+const exprOf = (src: string) => firstStmt(src).value;
+const exampleFiles = () =>
+  readdirSync(ROOT + 'examples')
+    .filter(f => f.endsWith('.c'))
+    .map(f => ROOT + 'examples/' + f);
 
 test('precedence: 1 + 2 * 3', () => {
   const e = exprOf('int main(){ return 1 + 2 * 3; }');
@@ -43,11 +46,14 @@ test('multiple declarators and globals', () => {
 });
 
 test('node shapes: literals, unary, calls, index, line numbers', () => {
-  const f = parse("int main(){\n  printf(\"%c\\n\", -'a');\n  return a[2]++;\n}").decls[0];
+  const f = parse('int main(){\n  printf("%c\\n", -\'a\');\n  return a[2]++;\n}').decls[0];
   const call = f.body.body[0].expr;
   assert.deepEqual([call.type, call.name, call.line], ['Call', 'printf', 2]);
   assert.equal(call.args[0].value, '%c\n');
-  assert.deepEqual([call.args[1].type, call.args[1].op, call.args[1].operand.text], ['Unary', '-', "'a'"]);
+  assert.deepEqual(
+    [call.args[1].type, call.args[1].op, call.args[1].operand.text],
+    ['Unary', '-', "'a'"],
+  );
   const ret = f.body.body[1].value;
   assert.deepEqual([ret.type, ret.target.type, ret.target.name], ['PostIncDec', 'Index', 'a']);
 });
